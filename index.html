@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Tic Tac Toe</title>
+        <style>
+            body {
+                padding: 0;
+                margin: 0;
+                height: 100dvh;
+                background: #000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+            }
+
+            main {
+                display: grid;
+                grid-template-columns: repeat(3, 30dvmin);
+                grid-template-rows: repeat(3, 30dvmin);
+                gap: 3vmin;
+            }
+
+            main div {
+                width: 30dvmin;
+                height: 30dvmin;
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            main div.player-1 {
+                mask-image: url(x.png);
+                mask-size: 100% 100%;
+                background: red;
+            }
+
+            main div.player-2 {
+                mask-image: url(o.png);
+                mask-size: 100% 100%;
+                background: blue;
+            }
+
+            main div.faded {
+                opacity: 0.5;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </main>
+    </body>
+</html>
+<script>
+    const UPGRADED = new URLSearchParams(location.search).has("evo");
+
+    // prettier-ignore
+    const board = [
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0
+    ];
+
+    const winning = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+    ];
+
+    const moves = [[], []];
+
+    let playing = true;
+    let current = 1; // player-one
+
+    const main = document.querySelector("main");
+    const divs = [...main.querySelectorAll("div")];
+
+    const sounds = [
+        new Audio("qubodup-click1.wav"),
+        new Audio("qubodup-click2.wav"),
+    ];
+
+    document.body.addEventListener("click", (e) => {
+        if (e.target == document.body) {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    });
+
+    main.addEventListener("click", (e) => {
+        if (!playing) {
+            return;
+        }
+
+        if (e.target.tagName === "DIV") {
+            let index = divs.indexOf(e.target);
+            if (board[index] !== 0) {
+                return;
+            }
+            board[index] = current;
+            e.target.className = `player-${current}`;
+
+            moves[current - 1].push(index);
+            sounds[current - 1].play();
+
+            if (UPGRADED && moves[current - 1].length === 4) {
+                divs[moves[current - 1][0]].className = "";
+                board[moves[current - 1].shift()] = 0;
+            }
+
+            checkWinner();
+
+            if (!playing) {
+                return;
+            }
+
+            current = current ^ 3;
+
+            if (UPGRADED && moves[current - 1].length === 3) {
+                divs[moves[current - 1][0]].classList.add("faded");
+            }
+        }
+    });
+
+    function checkWinner() {
+        const winner = winning.find((combo) => {
+            return (
+                board[combo[0]] &&
+                board[combo[0]] === board[combo[1]] &&
+                board[combo[1]] === board[combo[2]]
+            );
+        });
+
+        if (!winner) {
+            return;
+        }
+
+        playing = false;
+
+        for (let i = 0; i < divs.length; i++) {
+            if (!winner.includes(i) && board[i] !== 0) {
+                divs[i].classList.add("faded");
+            }
+        }
+    }
+</script>
